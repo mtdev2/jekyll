@@ -4,7 +4,9 @@ module Jekyll
   class StaticFile
     extend Forwardable
 
-    attr_reader :relative_path, :extname, :name
+    attr_reader :relative_path, :extname,
+                :type, # Returns the type of the collection if present, nil otherwise.
+                :name
 
     def_delegator :to_liquid, :to_json, :to_json
 
@@ -34,19 +36,17 @@ module Jekyll
       @collection = collection
       @relative_path = File.join(*[@dir, @name].compact)
       @extname = File.extname(@name)
+      @type = @collection&.label&.to_sym
     end
     # rubocop: enable Metrics/ParameterLists
 
     # Returns source file path.
     def path
-      @path ||= begin
-        # Static file is from a collection inside custom collections directory
-        if !@collection.nil? && !@site.config["collections_dir"].empty?
-          File.join(*[@base, @site.config["collections_dir"], @dir, @name].compact)
-        else
-          File.join(*[@base, @dir, @name].compact)
-        end
-      end
+      @path ||= if !@collection.nil? && !@site.config["collections_dir"].empty?
+                  File.join(*[@base, @site.config["collections_dir"], @dir, @name].compact)
+                else
+                  File.join(*[@base, @dir, @name].compact)
+                end
     end
 
     # Obtain destination path.
@@ -159,7 +159,7 @@ module Jekyll
 
     # Applies a similar URL-building technique as Jekyll::Document that takes
     # the collection's URL template into account. The default URL template can
-    # be overriden in the collection's configuration in _config.yml.
+    # be overridden in the collection's configuration in _config.yml.
     def url
       @url ||= begin
         base = if @collection.nil?
@@ -172,11 +172,6 @@ module Jekyll
                end.to_s.chomp("/")
         base << extname
       end
-    end
-
-    # Returns the type of the collection if present, nil otherwise.
-    def type
-      @type ||= @collection.nil? ? nil : @collection.label.to_sym
     end
 
     # Returns the front matter defaults defined for the file's URL and/or type

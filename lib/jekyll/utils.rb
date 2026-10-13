@@ -128,7 +128,8 @@ module Jekyll
     # Returns the parsed date if successful, throws a FatalException
     # if not
     def parse_date(input, msg = "Input could not be parsed.")
-      Time.parse(input).localtime
+      @parse_date_cache ||= {}
+      @parse_date_cache[input] ||= Time.parse(input).localtime
     rescue ArgumentError
       raise Errors::InvalidDateError, "Invalid date '#{input}': #{msg}"
     end
@@ -143,7 +144,7 @@ module Jekyll
       false
     end
 
-    # Determine whether the given content string contains Liquid Tags or Vaiables
+    # Determine whether the given content string contains Liquid Tags or Variables
     #
     # Returns true is the string contains sequences of `{%` or `{{`
     def has_liquid_construct?(content)
@@ -265,7 +266,7 @@ module Jekyll
       template
     end
 
-    # Work the same way as Dir.glob but seperating the input into two parts
+    # Work the same way as Dir.glob but separating the input into two parts
     # ('dir' + '/' + 'pattern') to make sure the first part('dir') does not act
     # as a pattern.
     #
@@ -287,7 +288,7 @@ module Jekyll
     # patterns - the patterns (or the pattern) which will be applied under the dir
     # flags    - the flags which will be applied to the pattern
     #
-    # Returns matched pathes
+    # Returns matched paths
     def safe_glob(dir, patterns, flags = 0)
       return [] unless Dir.exist?(dir)
 
@@ -303,12 +304,15 @@ module Jekyll
     # and a given param
     def merged_file_read_opts(site, opts)
       merged = (site ? site.file_read_opts : {}).merge(opts)
-      if merged[:encoding] && !merged[:encoding].start_with?("bom|")
+
+      # always use BOM when reading UTF-encoded files
+      if merged[:encoding]&.downcase&.start_with?("utf-")
         merged[:encoding] = "bom|#{merged[:encoding]}"
       end
-      if merged["encoding"] && !merged["encoding"].start_with?("bom|")
+      if merged["encoding"]&.downcase&.start_with?("utf-")
         merged["encoding"] = "bom|#{merged["encoding"]}"
       end
+
       merged
     end
 

@@ -10,7 +10,7 @@ Installation on other Linux distributions works similarly to installing on [Ubun
 ### Fedora
 
 ```sh
-sudo dnf install ruby ruby-devel openssl-devel redhat-rpm-config @development-tools
+sudo dnf install ruby ruby-devel openssl-devel redhat-rpm-config gcc-c++ @development-tools
 ```
 ### RHEL8/CentOS8
 
@@ -40,13 +40,14 @@ sudo emerge --ask --verbose jekyll
 ### ArchLinux
 
 ```sh
-sudo pacman -S ruby base-devel
+sudo pacman -S ruby base-devel ruby-erb
 ```
 
 ### OpenSUSE
 
 ```sh
 sudo zypper install -t pattern devel_ruby devel_C_C++
+sudo zypper install ruby-devel
 ```
 
 ### Clear Linux

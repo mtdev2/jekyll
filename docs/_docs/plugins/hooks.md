@@ -211,7 +211,7 @@ The complete list of available hooks:
         <p><code>:post_convert</code></p>
       </td>
       <td>
-        <p>After converting the post content, but before rendering the postlayout</p>
+        <p>After converting the post content, but before rendering the post layout</p>
       </td>
     </tr>
     <tr>
@@ -249,7 +249,7 @@ The complete list of available hooks:
 ## Hooks for custom Jekyll objects
 
 You can also register and trigger hooks for Jekyll objects introduced by your plugin. All it takes is placing `trigger` calls under a suitable
-`owner` name, at positons desired within your custom class and registering the `owner` by your plugin.
+`owner` name, at positions desired within your custom class and registering the `owner` by your plugin.
 
 To illustrate, consider the following plugin that implements custom functionality for every custom `Excerpt` object initialized:
 

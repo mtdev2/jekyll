@@ -8,9 +8,7 @@ module Jekyll
   module Commands
     class Serve
       class LiveReloadReactor
-        attr_reader :started_event
-        attr_reader :stopped_event
-        attr_reader :thread
+        attr_reader :started_event, :stopped_event, :thread
 
         def initialize
           @websockets = []
@@ -57,8 +55,9 @@ module Jekyll
               EM.schedule { @started_event.set }
               EM.add_shutdown_hook { @stopped_event.set }
 
+              host = opts["host"].include?(":") ? "[#{opts["host"]}]" : opts["host"]
               Jekyll.logger.info "LiveReload address:",
-                                 "http://#{opts["host"]}:#{opts["livereload_port"]}"
+                                 "http://#{host}:#{opts["livereload_port"]}"
             end
           end
           @thread.abort_on_exception = true
@@ -74,8 +73,7 @@ module Jekyll
               :liveCSS => true
             )
 
-            Jekyll.logger.debug "LiveReload:", "Reloading #{p.url}"
-            Jekyll.logger.debug "", json_message
+            Jekyll.logger.debug "LiveReload:", "Reloading URL #{p.url.inspect}"
             @websockets.each { |ws| ws.send(json_message) }
           end
         end
@@ -113,7 +111,7 @@ module Jekyll
 
         def log_error(error)
           Jekyll.logger.error "LiveReload experienced an error. " \
-            "Run with --trace for more information."
+                              "Run with --trace for more information."
           raise error
         end
       end

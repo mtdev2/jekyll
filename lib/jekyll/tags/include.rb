@@ -13,7 +13,7 @@ module Jekyll
       !mx.freeze
 
       FULL_VALID_SYNTAX = %r!\A\s*(?:#{VALID_SYNTAX}(?=\s|\z)\s*)*\z!.freeze
-      VALID_FILENAME_CHARS = %r!^[\w/.-]+$!.freeze
+      VALID_FILENAME_CHARS = %r!^[\w/.\-()+~\#@]+$!.freeze
       INVALID_SEQUENCES = %r![./]{2,}!.freeze
 
       def initialize(tag_name, markup, tokens)
@@ -179,8 +179,8 @@ module Jekyll
       private
 
       def could_not_locate_message(file, includes_dirs, safe)
-        message = "Could not locate the included file '#{file}' in any of "\
-          "#{includes_dirs}. Ensure it exists in one of those directories and"
+        message = "Could not locate the included file '#{file}' in any of #{includes_dirs}. " \
+                  "Ensure it exists in one of those directories and"
         message + if safe
                     " is not a symlink as those are not allowed in safe mode."
                   else
@@ -234,16 +234,26 @@ module Jekyll
       end
 
       def add_include_to_dependency(inclusion, context)
-        return unless context.registers[:page]&.key?("path")
+        page = context.registers[:page]
+        return unless page&.key?("path")
 
-        @site.regenerator.add_dependency(
-          @site.in_source_dir(context.registers[:page]["path"]),
-          inclusion.path
-        )
+        absolute_path = \
+          if page["collection"]
+            @site.in_source_dir(@site.config["collections_dir"], page["path"])
+          else
+            @site.in_source_dir(page["path"])
+          end
+
+        @site.regenerator.add_dependency(absolute_path, inclusion.path)
       end
     end
 
     class IncludeRelativeTag < IncludeTag
+      def load_cached_partial(path, context)
+        context.registers[:cached_partials] ||= {}
+        context.registers[:cached_partials][path] ||= parse_partial(path, context)
+      end
+
       def tag_includes_dirs(context)
         Array(page_path(context)).freeze
       end
@@ -260,7 +270,18 @@ module Jekyll
       def resource_path(page, site)
         path = page["path"]
         path = File.join(site.config["collections_dir"], path) if page["collection"]
-        path.sub(%r!/#excerpt\z!, "")
+        path.delete_suffix("/#excerpt")
+      end
+
+      # Since Jekyll 4 caches convertibles based on their path within the only instance of
+      # `LiquidRenderer`, initialize a new LiquidRenderer instance on every render of this
+      # tag to bypass caching rendered output of page / document.
+      def parse_partial(path, context)
+        LiquidRenderer.new(context.registers[:site]).file(path).parse(read_file(path, context))
+      rescue Liquid::Error => e
+        e.template_name = path
+        e.markup_context = "included " if e.markup_context.nil?
+        raise e
       end
     end
   end

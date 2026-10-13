@@ -102,15 +102,13 @@ module Jekyll
     # Returns String the converted content.
     def convert(content)
       converters.reduce(content) do |output, converter|
-        begin
-          converter.convert output
-        rescue StandardError => e
-          Jekyll.logger.error "Conversion error:",
-                              "#{converter.class} encountered an error while "\
-                              "converting '#{document.relative_path}':"
-          Jekyll.logger.error("", e.to_s)
-          raise e
-        end
+        converter.convert output
+      rescue StandardError => e
+        Jekyll.logger.error "Conversion error:",
+                            "#{converter.class} encountered an error while " \
+                            "converting '#{document.relative_path}':"
+        Jekyll.logger.error("", e.to_s)
+        raise e
       end
     end
 
@@ -181,7 +179,7 @@ module Jekyll
       return unless invalid_layout?(layout)
 
       Jekyll.logger.warn "Build Warning:", "Layout '#{document.data["layout"]}' requested " \
-        "in #{document.relative_path} does not exist."
+                                           "in #{document.relative_path} does not exist."
     end
 
     # Render layout content into document.output

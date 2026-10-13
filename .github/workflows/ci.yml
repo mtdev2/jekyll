@@ -3,102 +3,81 @@ name: Continuous Integration
 on:
   push:
     branches:
-    - master
-    - /.*-stable/
+      - master
+      - "*-stable"
+    paths-ignore:
+      - "docs/**"
   pull_request:
     branches:
-    - master
-    - /.*-stable/
+      - master
+      - "*-stable"
+    paths-ignore:
+      - "docs/**"
 
 jobs:
   ci:
-    if: "!contains(github.event.commits[0].message, '[ci skip]')"
-    name: 'Ruby ${{ matrix.ruby_version }}'
-    runs-on: 'ubuntu-latest'
-
+    name: "Run Tests (${{ matrix.ruby.label }} on ${{ matrix.os.label }})"
+    runs-on: ${{ matrix.os.image }}
     strategy:
       fail-fast: false
       matrix:
-        ruby_version:
-        - 2.5
-        - 2.7
-        - 3.0
-        - jruby-9.2.14.0
-
+        ruby:
+          - label: Ruby 3.4
+            version: "3.4"
+        os:
+          - label: Linux
+            image: "ubuntu-latest"
+          - label: Windows
+            image: "windows-latest"
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 5
-    - name: "Set up Ruby ${{ matrix.ruby_version }}"
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-        bundler-cache: true
-    - name: Run Unit Tests
-      run: bash script/test
-      env:
-        CI: true
-    - name: Run Cucumber Features
-      run: bash script/cucumber
-      env:
-        CI: true
-    - name: Sanity Check
-      run: bash script/default-site
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: "Set up ${{ matrix.ruby.label }}"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby.version }}
+          bundler-cache: true
+      - name: Run Minitest based tests
+        run: bash script/test
+      - name: Run Cucumber based tests
+        run: bash script/cucumber --color
+      - name: Generate and Build a new site
+        run: bash script/default-site
 
-  style_check:
-    if: "!contains(github.event.commits[0].message, '[ci skip]')"
-    name: 'Code Style Check (Ruby ${{ matrix.ruby_version }})'
-    runs-on: 'ubuntu-latest'
+  xtras:
+    name: "${{ matrix.job_name }} (${{ matrix.setup_label }})"
+    runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
       matrix:
-        ruby_version:
-        - 2.5
+        include:
+          - job_name: "Unit Test with JRuby"
+            setup_label: "JRuby 9.4.8.0"
+            step_name: "Run Minitest based tests"
+            script_file: "test"
+            ruby_version: "jruby-9.4.8.0"
+          - job_name: "Smoke Test with JRuby"
+            setup_label: "JRuby 9.4.8.0"
+            step_name: "Generate and Build a new site"
+            script_file: "default-site"
+            ruby_version: "jruby-9.4.8.0"
+          - job_name: "Profile Docs Site"
+            setup_label: "Ruby 3.4"
+            step_name: "Build and Profile docs site"
+            script_file: "profile-docs"
+            ruby_version: "3.4"
+          - job_name: "Style Check"
+            setup_label: "Ruby 3.4"
+            step_name: "Run RuboCop"
+            script_file: "fmt"
+            ruby_version: "3.4"
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 5
-    - name: "Set up Ruby ${{ matrix.ruby_version }}"
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-        bundler-cache: true
-    - name: Run RuboCop
-      run: bash script/fmt
-
-  profile_docs:
-    if: "!contains(github.event.commits[0].message, '[ci skip]')"
-    name: 'Profile Docs Site (Ruby ${{ matrix.ruby_version }})'
-    runs-on: 'ubuntu-latest'
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby_version:
-        - 2.4 # Minimum required Ruby version in gemspec
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 5
-    - name: "Set up Ruby ${{ matrix.ruby_version }}"
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby_version }}
-    - name: Cache dependencies
-      uses: actions/cache@v2.1.3
-      with:
-        path: vendor/bundle
-        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-gems-
-    - name: 'Update Rubygems and Bundler'
-      run: |
-        gem update --system --no-document
-        gem update bundler --no-document
-    - name: Set up bundle
-      run: |
-        bundle config path vendor/bundle
-        bundle install --jobs 4 --retry 3
-    - name: Build Docs site with --profile
-      run: bash script/profile-docs
-    - name: Profile memory usage of building Docs site
-      run: bash script/memprof
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: "Set up ${{ matrix.setup_label }}"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby_version }}
+          bundler-cache: true
+      - name: ${{ matrix.step_name }}
+        run: bash script/${{ matrix.script_file }}

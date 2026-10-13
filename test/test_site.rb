@@ -86,6 +86,34 @@ class TestSite < JekyllUnitTest
       site = Site.new(default_configuration)
       assert_equal File.join(site.source, ".jekyll-cache"), site.cache_dir
     end
+
+    should "have the cache_dir hidden from Git" do
+      site = fixture_site
+      assert_equal site.source, source_dir
+      assert_exist source_dir(".jekyll-cache", ".gitignore")
+      assert_equal(
+        "# ignore everything in this directory\n*\n",
+        File.binread(source_dir(".jekyll-cache", ".gitignore"))
+      )
+    end
+
+    should "load config file from theme-gem as Jekyll::Configuration instance" do
+      site = fixture_site("theme" => "test-theme")
+      assert_instance_of Jekyll::Configuration, site.config
+      assert_equal "Hello World", site.config["title"]
+    end
+
+    context "with a custom cache_dir configuration" do
+      should "have the custom cache_dir hidden from Git" do
+        site = fixture_site("cache_dir" => "../../custom-cache-dir")
+        refute_exist File.expand_path("../../custom-cache-dir/.gitignore", site.source)
+        assert_exist source_dir("custom-cache-dir", ".gitignore")
+        assert_equal(
+          "# ignore everything in this directory\n*\n",
+          File.binread(source_dir("custom-cache-dir", ".gitignore"))
+        )
+      end
+    end
   end
 
   context "creating sites" do
@@ -219,6 +247,7 @@ class TestSite < JekyllUnitTest
       @site.process
       # exclude files in symlinked directories here and insert them in the
       # following step when not on Windows.
+      # rubocop:disable Style/WordArray
       sorted_pages = %w(
         %#\ +.md
         .htaccess
@@ -246,6 +275,7 @@ class TestSite < JekyllUnitTest
         test-styles.scss
         trailing-dots...md
       )
+      # rubocop:enable Style/WordArray
       unless Utils::Platforms.really_windows?
         # files in symlinked directories may appear twice
         sorted_pages.push("main.css.map", "main.scss", "symlinked-file").sort!
@@ -591,8 +621,8 @@ class TestSite < JekyllUnitTest
           site = fixture_site("theme" => {})
           assert_nil site.theme
         end
-        expected_msg = "Theme: value of 'theme' in config should be String " \
-          "to use gem-based themes, but got Hash\n"
+        expected_msg = "Theme: value of 'theme' in config should be String to use " \
+                       "gem-based themes, but got Hash\n"
         assert_includes output, expected_msg
       end
 
@@ -709,6 +739,24 @@ class TestSite < JekyllUnitTest
       [:reset, :read, :generate, :render, :cleanup, :write].each do |phase|
         assert_nil site.send(phase)
       end
+    end
+  end
+
+  context "static files in a collection" do
+    should "be exposed via site instance" do
+      site = fixture_site("collections" => ["methods"])
+      site.read
+
+      assert_includes site.static_files.map(&:relative_path), "_methods/extensionless_static_file"
+    end
+
+    should "not be revisited in `Site#each_site_file`" do
+      site = fixture_site("collections" => { "methods" => { "output" => true } })
+      site.read
+
+      visited_files = []
+      site.each_site_file { |file| visited_files << file }
+      assert_equal visited_files.count, visited_files.uniq.count
     end
   end
 end

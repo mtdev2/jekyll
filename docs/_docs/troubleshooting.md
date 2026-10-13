@@ -208,6 +208,15 @@ you don't have a proper JavaScript runtime. To solve this, either install
 
 ## Problems running Jekyll
 
+### macOS
+
+Jekyll is compatible with macOS with ARM64 architecture.
+However, `bundle exec jekyll serve` may [fail with older version `ffi`](https://github.com/ffi/ffi/issues/870).
+
+You may need to run `bundle update` or update `ffi` to at least `1.14.2` manually.
+
+### Debian or Ubuntu
+
 On Debian or Ubuntu, you may need to add `/var/lib/gems/1.8/bin/` to your path
 in order to have the `jekyll` executable be available in your Terminal.
 
@@ -308,7 +317,7 @@ The issue is caused by trying to copy a non-existing symlink.
   <h5>Please report issues you encounter!</h5>
   <p>
   If you come across a bug, please <a href="{{ site.repository }}/issues/new">create an issue</a>
-  on GitHub describing the problem and any work-arounds you find so we can
+  on GitHub describing the problem and any workarounds you find so we can
   document it here for others.
   </p>
 </div>

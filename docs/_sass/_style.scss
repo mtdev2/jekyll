@@ -1,26 +1,36 @@
 /* Base */
 
- html {
-   box-sizing: border-box;
- }
+@charset "utf-8";
 
- *,
- *:before,
- *:after {
-   box-sizing: inherit;
- }
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
 
 body {
-  font: 300 21px Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 300;  
   color: #ddd;
   background-color: #333;
   @include box-shadow(inset 0 3px 30px rgba(0,0,0,.3));
   text-shadow: 0 1px 3px rgba(0,0,0,.5);
-  -webkit-font-feature-settings: "kern" 1;
-  -moz-font-feature-settings: "kern" 1;
-  -o-font-feature-settings: "kern" 1;
-  font-feature-settings: "kern" 1;
-  font-kerning: normal;
+
+  // Not legible with 300 weight
+  // -moz-osx-font-smoothing: grayscale;
+  // -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  
+  -webkit-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -moz-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -ms-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  -o-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
+  font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'onum', 'pnum';
   margin: 0;
 }
 
@@ -202,40 +212,38 @@ h6:hover .header-link {
 /* Footer */
 
 footer {
-  background-color: #212121;
-  font-size: 16px;
-  padding-bottom: 5px;
-  color: #c0c0c0;
   margin-top: 40px;
+  padding-bottom: 5px;
+  font-size: 15px;
+  font-weight: 400;
+  color: #999999;
+  background-color: #212121;
 
   a {
-    color: #fff;
+    color: #dddddd;
 
     &:hover {
-
       img { opacity: 1; }
     }
   }
 
-  .align-right {
-
-    p { display: inline-block; }
-  }
+  p { margin-block: 12px }
 
   img {
     display: inline-block;
-    vertical-align: middle;
-    margin-left: 5px;
-    opacity: .8;
+    width: 84px;
+    height: auto;
+    margin-left: 2px;
     padding: 1px;
-    @include transition(opacity .2s);
+    vertical-align: bottom;
+    opacity: 0.5;
+    @include transition(opacity 0.2s);
   }
 }
 
 @media (max-width: 568px) {
   footer {
-    .one-third p { margin-bottom: 0; }
-    .two-thirds p { margin-top: -20px; }
+    p { margin-block: 6px }
   }
 }
 
@@ -434,7 +442,9 @@ article {
 }
 
 @media (max-width: 480px) {
-  article ul { padding-left: 20px; }
+  article {
+    ul, ol { padding-left: 20px }
+  }
 }
 
 @media (max-width: 568px) {
@@ -669,31 +679,14 @@ article h2:first-child { margin-top: 0; }
 
 .news article + article {
   margin-top: -6px;
-  padding: 15px 40px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   border-top: 1px solid #555;
   border-radius: 0;
   @include box-shadow(0 -1px 0 #2f2f2f);
 
   h2.post-title {
     margin-bottom: 0.45em;
-  }
-  .post-category {
-    margin-right: 20px;
-    padding-left: 0;
-    width: 150px;
-    box-sizing: border-box;
-    .label {
-      float: right;
-    }
-  }
-  .cell-left, .cell-right {
-    display: inline-block;
-  }
-  .cell-left {
-    max-width: 180px;
-  }
-  .cell-right {
-    width: calc(100% - 130px);
   }
   .post-date { margin-left: 0 }
 }
@@ -1242,9 +1235,11 @@ p.note {
 }
 
 .language-sh {
+  margin-top: 5px;
+  margin-bottom: 5px;
   position: relative;
   &:before {
-    display: table;
+    display: inline-table;
     padding: 8px;
     width: 100%;
     padding: 5px 0;
@@ -1257,19 +1252,27 @@ p.note {
     background-image: -webkit-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
     background-image: -moz-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
     background-image: -o-linear-gradient(top, #f7f7f7 0%, #cfcfcf 7%, #aaaaaa 100%);
-    background-image: linear-gradient(top, #f7f7f7 0%,#cfcfcf 7%,#aaaaaa 100%);
+    background-image: linear-gradient(to bottom, #ddd 0%,#999 84%,#bbb 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f7f7f7', endColorstr='#aaaaaa',GradientType=0 );
-    border-bottom: 1px solid #111;
     text-align: center;
     content: "terminal";
-    @include border-radius(5px 5px 0 0);
+    @include border-radius(3px 3px 0 0);
     @include box-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   .highlight {
-    @include border-radius(0 0 5px 5px);
+    @include border-radius(0 0 3px 3px);
+  }
+  div.highlight {
+    border: 1px solid;
+    border-color: transparent #bbb #bbb #bbb;
+    @include box-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   pre.highlight {
+    min-height: 48px;
     background: #1c1c1c;
+  }
+  code {
+    font-size: 15px
   }
 }
 
